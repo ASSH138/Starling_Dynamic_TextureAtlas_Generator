@@ -48,16 +48,7 @@ import drawer.*
 		private var boundingBoxData:Object;
 		private var isDrawing:Boolean=false;
 		private var pivotPoint:Point;
-		private  static function addLeadingZeros(base:int,number:int):String{
-	var baseStr:String=base.toFixed(0);
-	var numberStr:String=number.toFixed(0);
-	var fix:String=numberStr;
-	for(var char=numberStr.length;char<baseStr.length;char++){
-		fix="0"+fix;
-	}
-	return fix;
-	
-}
+		
 public static function cacheMovieClipData(Assetss:Object,atlas:labelledTextureAtlas,clipName:String,labels:Array=null,cacheLabel:String=null){
 	
 	var allFrames:Vector.<Texture> = new Vector.<Texture>;
@@ -102,6 +93,16 @@ public static function cacheMovieClipData(Assetss:Object,atlas:labelledTextureAt
 	Assetss[cacheLabel+"labels"]=labeles;
 	
 }
+		private  static function addLeadingZeros(base:int,number:int):String{
+	var baseStr:String=base.toFixed(0);
+	var numberStr:String=number.toFixed(0);
+	var fix:String=numberStr;
+	for(var char=numberStr.length;char<baseStr.length;char++){
+		fix="0"+fix;
+	}
+	return fix;
+	
+}
 		public static function createTextureAtlas(drawdataNames:Array,staged:MovieClip,debug:Boolean=false):labelledTextureAtlas{
 			var drawDatas:Vector.<drawData>= new Vector.<drawData>;
 			for(var d:int=0;d<drawdataNames.length;d++){
@@ -117,7 +118,6 @@ public static function cacheMovieClipData(Assetss:Object,atlas:labelledTextureAt
 			var success:Boolean=false;
 			var spriteSheetSize:int=256;
 			var labell:Object={};
-			var pivotPoints:Object={};
 			while(!success){
 				var abort:Boolean=false;
 				var spriteSheet:BitmapData= new BitmapData(spriteSheetSize,spriteSheetSize,true,0);
@@ -132,11 +132,9 @@ public static function cacheMovieClipData(Assetss:Object,atlas:labelledTextureAt
 			for(var c:int=0;c<drawDatas.length;c++){
 				
 				var currentDrawData:drawData=drawDatas[c];
-			 var bitmapDatas:Array= currentDrawData.bitmapDatas;
-			var currentlabelArray:Array=[""];
+			 var bitmapDatas:Vector.<BitmapData>= currentDrawData.bitmapDatas;
+			var currentlabelArray:Array=[];
 			labell[currentDrawData.clipName]= currentlabelArray;
-			pivotPoints[currentDrawData.clipName]= currentDrawData.pivotPoint;
-			trace(currentDrawData.clipName+" pivot point is "+currentDrawData.pivotPoint);
 			  var nearest10:int=10;
 				 while(nearest10<bitmapDatas.length){
 					 nearest10*=10;
@@ -145,11 +143,8 @@ public static function cacheMovieClipData(Assetss:Object,atlas:labelledTextureAt
 				 var prevLabelIndex:uint=0;
 			 for(var b:int=0;b<bitmapDatas.length;b++){
 				
-			
+			 
 				 var currentBitmapData:BitmapData= bitmapDatas[b];
-				  if(currentBitmapData==null){
-					  currentBitmapData=bitmapDatas[b-1];
-				  }
 				  if(drawX+currentBitmapData.width>spriteSheet.width){
 					 drawX=0;
 					 drawY=lowestRowY;
@@ -247,7 +242,6 @@ public static function cacheMovieClipData(Assetss:Object,atlas:labelledTextureAt
 			var texture:Texture = Texture.fromBitmapData(spriteSheet,false);
 			var textureAtlas:labelledTextureAtlas= new labelledTextureAtlas(texture);
 			textureAtlas.mFrameLabels= labell;
-			textureAtlas.mPivotPoints= pivotPoints;
 			for (var bit2 in rectangles){
 				var rectBit:Rectangle=rectangles[bit2];
 				var namet:String=names[bit2];
@@ -319,19 +313,20 @@ public static function cacheMovieClipData(Assetss:Object,atlas:labelledTextureAt
       }
 	  private static function addDrawElement():void{
 		  if(drawData.toDrawList.length>0){
-		  var ele:String= drawData.toDrawList.pop();
-		  if(ele.indexOf("_")!=-1){
-			  var index:int=ele.indexOf("_");
-			  var className:String=ele.substring(0,index);
-			  var color:String=ele.substring(index+1);
+		  var ele:*= drawData.toDrawList.pop();
+		  if(ele is flash.display.MovieClip){
+			  var Ddata:drawData=new drawData(null,null,ele);
+		  }else if (ele is FunctionData){
+			  var Ddata:drawData= new drawData(null,ele,null);
+		  }else if (ele is String){
+			  var Ddata:drawData= new drawData(ele,null,null);
 		  }
-				var Ddata:drawData=new drawData(ele,className,color);
 				
 				trace(drawData.currentlyDrawingList);
 		  }
 	  }
 	  private static function enterFrame(evt:Event):void{
-		  //trace("ENTER_FRAME");
+		  trace("ENTER_FRAME");
 		  for(var d:int=0;d<drawData.currentlyDrawingList.length;d++){
 			  var dawData:drawData= drawData.currentlyDrawingList[d];
 			  if(dawData.isDrawing){
@@ -340,7 +335,7 @@ public static function cacheMovieClipData(Assetss:Object,atlas:labelledTextureAt
 		  }
 	  }
 	    private static function exitFrame(evt:Event):void{
-		//  trace("EXIT_FRAME");
+		  trace("EXIT_FRAME");
 		  for(var d:int=0;d<drawData.currentlyDrawingList.length;d++){
 			  var dawData:drawData= drawData.currentlyDrawingList[d];
 			    if(dawData.isDrawing){
@@ -351,29 +346,23 @@ public static function cacheMovieClipData(Assetss:Object,atlas:labelledTextureAt
 				}
 		  }
 	  }
-		public function drawData(clipName:String,clip:*=null,color:String=null):void{
+		public function drawData(clipName:String,clip:*=null,functiondata:FunctionData=null):void{
 			trace("drawData("+clipName+","+clip+","+color+");");
 			drawData.currentlyDrawingList.push(this);
 			//this.labels=new Array;
+			if(clipName!=null){
 			this.clipName=clipName;
-			if(className==null){
-				className=this.clipName;
+			var clas:Class=Class(getDefinitionByName(clipName));
+			this.clip= new clas();
 			}
-			var className:String;
-			if(clip!=null&&(clip is String)){
+			if(functiondata!=null){
+				this.clip= functiondata.construct();
+				this.clipName=functiondata.className;
+				}
 				
-				className=clip;
-			}else{
-				 className=clipName;
-			}
-			var cl:Class= Class(getDefinitionByName(className));
-			if(color==null){
-			this.clip= new cl;
-			}else{
-				this.clip= new cl(color);
-			}
 			if (clip!=null&&(clip is MovieClip)){
 				this.clip=clip;
+				this.clipName=clip.name;
 			}
 			this.labels= [];
 			this.beginGetBoundingBox();
@@ -439,10 +428,6 @@ public static function cacheMovieClipData(Assetss:Object,atlas:labelledTextureAt
 			boundingBox.bottom = this.boundingBoxData.maxBottom;
 			this.boundingBoxBeingEvaluated=false;
 			this.rect=boundingBox;
-			var top:Number= boundingBox.top;
-			var left:Number=boundingBox.left;
-			this.pivotPoint= new Point(-left,-top);
-			trace("clipname pivot point:"+this.pivotPoint);
 			trace("finished Bounding box:"+this.clipName);
 			if(this.clip.currentFrame!=1){
 			while(this.clip.numChildren>0){
@@ -541,12 +526,8 @@ public static function cacheMovieClipData(Assetss:Object,atlas:labelledTextureAt
 		}
 		public function onDrawComplete():void{
 			drawData.completedDrawingList.push(this);
-			try{
 			if(drawData.debugMode){
 				drawData.staged.removeChild(this.clip);
-			}
-			}catch(Err:Error){
-				
 			}
 			drawData.staged.dispatchEvent(new DrawEvent(DrawEvent.CLIP_COMPLETE,new <drawData>[this]));
 			//Assetss.createTextureArray(this.clipName,this.bitmapDatas);
