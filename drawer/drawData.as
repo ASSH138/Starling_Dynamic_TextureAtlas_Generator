@@ -58,6 +58,50 @@ import drawer.*
 	return fix;
 	
 }
+public static function cacheMovieClipData(Assetss:Object,atlas:labelledTextureAtlas,clipName:String,labels:Array=null,cacheLabel:String=null){
+	
+	var allFrames:Vector.<Texture> = new Vector.<Texture>;
+	var frameNo:int=0;
+	var labeles:Object={};
+	if(labels==null){
+		labels= atlas.mFrameLabels[clipName];
+		trace("labels:"+labels);
+	}
+	for(var i:int=0;i<labels.length;i++){
+		var labell:String=labels[i];
+		var n:int=0;
+		
+		while(true){
+			try{
+			var currentTexture:Texture=atlas.getTexture(clipName+"-"+labell+"-"+String(n));
+			}catch(err:Error){
+				break;
+			}
+			if(currentTexture==null){
+				break;
+			}
+			if(n==0){
+				labeles[labell]= frameNo;
+		trace(labell+" = "+frameNo);
+			}
+			trace(frameNo+" = "+labell+"-"+String(n));
+		allFrames.push(currentTexture);
+		n++;
+		frameNo++;
+		if(n>int.MAX_VALUE){
+			break;
+		}
+		}
+	}
+	if(atlas.mPivotPoints[clipName]!=null){
+		var pivot:Point=atlas.mPivotPoints[clipName];
+		Assetss[cacheLabel+"pivotPoint"]= pivot;
+	}
+	Assetss[cacheLabel+"atlas"] = atlas;
+	Assetss[cacheLabel+"vector"]= allFrames;
+	Assetss[cacheLabel+"labels"]=labeles;
+	
+}
 		public static function createTextureAtlas(drawdataNames:Array,staged:MovieClip,debug:Boolean=false):labelledTextureAtlas{
 			var drawDatas:Vector.<drawData>= new Vector.<drawData>;
 			for(var d:int=0;d<drawdataNames.length;d++){
