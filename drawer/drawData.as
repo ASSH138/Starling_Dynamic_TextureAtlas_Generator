@@ -28,7 +28,7 @@ import drawer.*
 		private static var toDrawList:Array;
 		private static var currentlyDrawingList:Vector.<drawData>;
 		private static var completedDrawingList:Vector.<drawData>
-		private static const batchLimit:uint=4;
+		public static var batchLimit:uint=4;
 		public static var debugMode:Boolean=true;
 		private static var sprite:Sprite;
 		//private static var currentHeight:Number;
@@ -39,9 +39,9 @@ import drawer.*
 		private static const debugCanvasSize:Number=300;
 		private static var spriteDrawHeadX:Number;
 		private static var spriteDrawHeadY:Number;
-		private static const spriteScale:Number=2;
-		private static const spriteX:Number=50;
-		private static const spriteY:Number=50;
+		public static var spriteScale:Number=2;
+		public static var spriteX:Number=50;
+		public static var spriteY:Number=50;
 		private static const showSpriteFrames:int=125;
 		private static var batchDrawInProgress:Boolean=false;
 		private var boundingBoxBeingEvaluated:Boolean=false;
